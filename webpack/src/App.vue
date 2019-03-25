@@ -1,7 +1,7 @@
 <template>
     <div id="app">
         <el-container>
-            <el-header class="header">
+            <el-header class="header" >
                 <h4>IoT Platform</h4>
             </el-header>
             <el-container>
@@ -13,12 +13,12 @@
                         <label class="nav-header">导航栏</label>
                         <el-menu-item index="1" route="device">
                             <i class="el-icon-setting"></i>
-                            <span slot="title">设备</span>
+                            <span slot="title">设备实例</span>
                         </el-menu-item>
-                        <el-menu-item index="2" route="sensor">
-                            <i class="el-icon-view"></i>
-                            <span slot="title">传感器</span>
-                        </el-menu-item>
+                        <!--<el-menu-item index="2" route="sensor">-->
+                            <!--<i class="el-icon-view"></i>-->
+                            <!--<span slot="title">传感器</span>-->
+                        <!--</el-menu-item>-->
                     </el-menu>
                 </el-aside>
                 <el-main>

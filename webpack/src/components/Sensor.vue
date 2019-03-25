@@ -1,6 +1,11 @@
 <template>
     <el-row>
-        <h3>传感器列表</h3>
+        <el-breadcrumb separator="/">
+            <el-breadcrumb-item><a href="/">首页</a></el-breadcrumb-item>
+            <el-breadcrumb-item :to="{path: 'device'}">设备实例</el-breadcrumb-item>
+            <el-breadcrumb-item>传感器</el-breadcrumb-item>
+        </el-breadcrumb>
+        <h3><label>设备 {{ this.deviceId }}</label>: 传感器列表</h3>
         <el-table
                 :data="sensors"
                 stripe
@@ -29,39 +34,43 @@
                     label="操作"
                     width="100">
                 <template slot-scope="scope">
-                    <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
-                    <el-button type="text" size="small">编辑</el-button>
+                    <el-button @click="showSensorData(scope.row)" type="text" size="small">查看</el-button>
                 </template>
             </el-table-column>
         </el-table>
     </el-row>
 </template>
 <script>
+    import {get, post} from '../tools/http'
     export default {
         data() {
             return {
-                sensors: [{
-                    id: '1',
-                    device_id: '1',
-                    name: '光敏电阻1',
-                    port: 7000,
-                    type: '光敏电阻',
-                    state: 'active'
-                }, {
-                    id: '2',
-                    device_id: '1',
-                    name: '光敏电阻2',
-                    port: 7001,
-                    type: '光敏电阻',
-                    state: 'active'
-                }, {
-                    id: '3',
-                    device_id: '1',
-                    name: '光敏电阻2',
-                    port: 7002,
-                    type: '光敏电阻',
-                    state: 'active'
-                }]
+                deviceId: null,
+                sensors: []
+            }
+        },
+        created() {
+            this.deviceId = this.$route.params.deviceId;
+            if (!this.deviceId) {
+                this.$router.push({name: 'device'});
+                return;
+            }
+            this.getSensors();
+        },
+        methods: {
+            getSensors() {
+                get(`api/device/${this.deviceId}/sensor`)
+                    .then(res => {
+                        if (!res.success) {
+                            this.$message.error(res.message);
+                        } else {
+                            this.sensors = res.data;
+                        }
+                    });
+            },
+            showSensorData(row) {
+                console.log(row);
+                this.$router.push({name: 'sensorData', params: {deviceId: this.deviceId, sensorId: row.id}});
             }
         }
     }

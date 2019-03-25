@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import Device from '../components/Device'
 import Sensor from '../components/Sensor'
+import SensorData from '../components/SensorData'
 
 
 Vue.use(Router);
@@ -21,6 +22,11 @@ const routes = [
         path: '/sensor',
         name: 'sensor',
         component: Sensor
+    },
+    {
+        path: '/sensor/data',
+        name: 'sensorData',
+        component: SensorData
     }
 ];
 
