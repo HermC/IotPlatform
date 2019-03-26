@@ -1,7 +1,7 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
-var connector = require('../db/mysql');
+const connector = require('../db/mysql');
 
 router.get('/list', function(req, res, next) {
     connector.query('SELECT * FROM device', function(error, results, fields) {
