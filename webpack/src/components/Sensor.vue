@@ -24,6 +24,9 @@
                     prop="port" label="端口">
             </el-table-column>
             <el-table-column
+                    prop="protocol" label="协议">
+            </el-table-column>
+            <el-table-column
                     prop="type" label="类型">
             </el-table-column>
             <el-table-column
