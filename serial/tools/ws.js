@@ -9,4 +9,8 @@ ws.on('message', function(msg) {
     console.log('ws message received: ' + msg);
 });
 
+ws.on('error', function(err) {
+    console.log(err);
+});
+
 module.exports = ws;

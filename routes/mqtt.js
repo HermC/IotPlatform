@@ -4,6 +4,8 @@ const settings = {
 };
 const server = new mosca.Server(settings);
 
+const CTL_DATA = 1000;
+
 server.on('ready', function(){
     console.log('Mosca server is up and running');
 });
