@@ -1,7 +1,10 @@
 const WebSocket = require('ws');
 const ws = new WebSocket('ws://localhost:6001');
 
+ws.isOpen = false;
+
 ws.on('open', function() {
+    ws.isOpen = true;
     console.log('ws connection established!');
 });
 

@@ -7,9 +7,34 @@
             <el-breadcrumb-item>数据</el-breadcrumb-item>
         </el-breadcrumb>
         <h3><label>传感器 {{ this.sensorId }}</label> 数据</h3>
-        <div id="chart" class="chart">
+        <el-card shadow="hover">
+            <div slot="header">
+                <span>实时数据</span>
+            </div>
+            <div id="chart" class="chart">
 
-        </div>
+            </div>
+        </el-card>
+        <br>
+        <el-card shadow="hover">
+            <div slot="header">
+                <span>历史数据</span>
+                <el-date-picker v-model="timeRange"
+                                type="datetimerange"
+                                :picker-options="pickerOptions2"
+                                range-separator="至"
+                                start-placeholder="开始日期"
+                                end-placeholder="结束日期"
+                                align="right"
+                                style="margin-left: 50px"
+                                @change="selectTimeRange">
+
+                </el-date-picker>
+            </div>
+            <div id="history-chart" class="chart">
+
+            </div>
+        </el-card>
     </el-row>
 </template>
 
@@ -27,11 +52,40 @@
                 chart: null,
                 data: [],
 
-                now: +new Date(1997, 9, 3),
-                oneDay: 24 * 3600 * 1000,
-                value: Math.random() * 1000,
+                historyChart: null,
+                historyData: [],
 
-                getDataInterval: null
+                getDataInterval: null,
+
+                timeRange: null,
+
+                pickerOptions2: {
+                    shortcuts: [{
+                        text: '最近一周',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近一个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }, {
+                        text: '最近三个月',
+                        onClick(picker) {
+                            const end = new Date();
+                            const start = new Date();
+                            start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                            picker.$emit('pick', [start, end]);
+                        }
+                    }]
+                }
             }
         },
         created() {
@@ -44,23 +98,28 @@
             }
         },
         mounted() {
-            this.start = new Date('2019-03-27 00:00:00');
-            this.end = new Date('2019-03-27 01:00:00');
+            let now = new Date();
+
+            this.start = new Date(now - 1800 * 1000);
+            this.end = new Date(now);
 
             this.drawChart();
-            this.getData(this.start.format('yyyy-MM-dd hh:mm:ss'), this.end.format('yyyy-MM-dd hh:mm:ss'));
+            this.getData(this.start.format(), this.end.format(), this.data, this.changeChartData);
 
+            this.timeRange = [new Date(new Date('2019-03-27 01:00:00') - 1800 * 1000), new Date('2019-03-27 01:00:00')];
+            this.drawHistoryData();
+            this.getData(this.timeRange[0].format(), this.timeRange[1].format(), this.historyData, this.changeHistoryChartData);
             this.getDataInterval = setInterval(() => {
                 this.start = this.end;
-                this.end = new Date(+this.end + 60 * 1000);
-                this.getData(this.start.format('yyyy-MM-dd hh:mm:ss'), this.end.format('yyyy-MM-dd hh:mm:ss'));
-            }, 2000);
+                this.end = new Date(+this.end + 5 * 1000);
+                this.getData(this.start.format(), this.end.format(), this.data, this.changeChartData);
+            }, 5000);
         },
         beforeDestroy() {
             clearInterval(this.getDataInterval);
         },
         methods: {
-            getData(start, end) {
+            getData(start, end, data, cb) {
                 if (this.sensorId) {
                     post(`api/device/sensor/${this.sensorId}/data`, {start: start, end: end})
                         .then(res => {
@@ -70,26 +129,35 @@
                                 // console.log(res.data);
                                 for (let i = 0; i < res.data.length; i++) {
                                     let item = res.data[i];
-                                    if (this.data.length > 1000) {
-                                        this.data.shift();
+                                    if (data.length > 1000) {
+                                        data.shift();
                                     }
-                                    this.data.push([item.record_time, item.value]);
+                                    data.push([item.record_time, item.value]);
                                 }
-                                this.chart.setOption({
-                                    series: [{
-                                        data: this.data
-                                    }]
-                                })
+                                cb(data);
                             }
                         });
                 }
             },
+            // getData2(start, end, cb) {
+            //     if (this.sensorId) {
+            //         post(`api/device/sensor/${this.sensorId}/data`, {start: start, end: end})
+            //             .then(res => {
+            //                 if (!res.success) {
+            //                     this.$message.success(res.message);
+            //                 } else {
+            //                     console.log(res.data);
+            //                     this.data = res.data;
+            //                     cb(this.data);
+            //                 }
+            //             });
+            //     }
+            // },
             drawChart() {
-                // console.log(this.$echarts);
                 this.chart = this.$echarts.init(document.getElementById('chart'));
                 const chartOptions = {
                     title: {
-                        text: '传感器数据',
+                        text: '传感器实时数据',
                         x: 'center'
                     },
                     tooltip: {
@@ -113,15 +181,80 @@
                         type: 'line',
                         showSymbol: false,
                         hoverAnimation: false,
-                        data: this.data
+                        data: this.data,
+                        markLine: {
+                            silent: true,
+                            data: [{
+                                yAxis: 6
+                            }]
+                        }
                     }]
                 };
                 this.chart.setOption(chartOptions);
+            },
+            changeChartData(data) {
+                this.chart.setOption({
+                    series: [{
+                        data: data
+                    }]
+                });
+            },
+            drawHistoryData() {
+                this.historyChart = this.$echarts.init(document.getElementById('history-chart'));
+                const historyChartOptions = {
+                    title: {
+                        text: '传感器历史数据',
+                        x: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    xAxis: {
+                        type: 'time',
+                        splitLine: {
+                            show: false
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        boundaryGap: [0, '100%'],
+                        splitLine: {
+                            show: false
+                        }
+                    },
+                    series: [{
+                        name: '数据',
+                        type: 'line',
+                        showSymbol: false,
+                        hoverAnimation: false,
+                        data: this.data,
+                        markLine: {
+                            silent: true,
+                            data: [{
+                                yAxis: 6
+                            }]
+                        }
+                    }]
+                };
+                this.historyChart.setOption(historyChartOptions);
+            },
+            changeHistoryChartData(data) {
+                this.historyChart.setOption({
+                    series: [{
+                        data: data
+                    }]
+                });
+            },
+            selectTimeRange() {
+                this.getData(this.timeRange[0].format(), this.timeRange[1].format(), this.changeHistoryChartData);
             }
         }
     }
 
     Date.prototype.format = function (fmt) { //author: meizz
+        if (!fmt) {
+            fmt = 'yyyy-MM-dd hh:mm:ss';
+        }
         let o = {
             "M+": this.getMonth() + 1,                 //月份
             "d+": this.getDate(),                    //日

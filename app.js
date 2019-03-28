@@ -50,5 +50,6 @@ app.use(function (err, req, res, next) {
 });
 
 const mosca = require('./routes/mqtt');
+const wss = require('./routes/ws');
 
 module.exports = app;
